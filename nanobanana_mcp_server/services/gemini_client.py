@@ -171,6 +171,9 @@ class GeminiClient:
                         "4k": "4K",
                         "2k": "2K",
                         "1k": "1K",
+                        "512": "512",
+                        "0.5k": "512",
+                        "low": "512",
                         "high": "1K",  # Default high to 1K
                     }
                     image_size = resolution_map.get(resolution.lower(), "1K")
