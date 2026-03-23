@@ -600,27 +600,15 @@ def register_generate_image_tool(server: FastMCP):
                 ),
             }
 
-            # Add cost tracking from gemini client
+            # Add token usage from gemini client
             try:
                 gemini_client = getattr(selected_service, "gemini_client", None)
                 if gemini_client is None:
                     gemini_client = getattr(selected_service, "_gemini_client", None)
                 if gemini_client and hasattr(gemini_client, "_last_usage") and gemini_client._last_usage:
-                    usage_data = gemini_client._last_usage
-                    structured_content["usage"] = usage_data
-                    cost = usage_data.get("estimated_cost")
-                    if cost is not None:
-                        cost_line = (
-                            f"\n💰 **Est. cost**: ${cost:.4f} "
-                            f"({usage_data.get('prompt_tokens', 0)} in / "
-                            f"{usage_data.get('candidates_tokens', 0)} out tokens)"
-                        )
-                        summary_lines.append(cost_line)
-                        # Rebuild full_summary and content with cost info
-                        full_summary = "\n".join(summary_lines)
-                        content = [TextContent(type="text", text=full_summary), *thumbnail_images]
+                    structured_content["usage"] = gemini_client._last_usage
             except Exception:
-                pass  # Don't break image generation for cost tracking
+                pass
 
             action_verb = "edited" if detected_mode == "edit" else "generated"
             logger.info(

@@ -212,25 +212,8 @@ class GeminiClient:
                     "candidates_tokens": candidates_tokens,
                     "total_tokens": total_tokens,
                 }
-                model_name = self.gemini_config.model_name
-                if "pro" in model_name:
-                    # Pro: $2.00/M input, $12.00/M text output, $120.00/M image output
-                    input_cost = prompt_tokens * 2.00 / 1_000_000
-                    output_cost = candidates_tokens * 120.00 / 1_000_000
-                    self._last_usage["estimated_cost"] = round(input_cost + output_cost, 4)
-                    self._last_usage["pricing"] = "pro ($2/M in, $120/M img out)"
-                elif "flash" in model_name:
-                    # Flash: $0.50/M input, $3.00/M text output, $60.00/M image output
-                    input_cost = prompt_tokens * 0.50 / 1_000_000
-                    output_cost = candidates_tokens * 60.00 / 1_000_000
-                    self._last_usage["estimated_cost"] = round(input_cost + output_cost, 4)
-                    self._last_usage["pricing"] = "flash ($0.50/M in, $60/M img out)"
-                else:
-                    self._last_usage["estimated_cost"] = None
-                    self._last_usage["pricing"] = "unknown"
                 self.logger.info(
-                    f"Token usage: {prompt_tokens} in / {candidates_tokens} out / "
-                    f"${self._last_usage.get('estimated_cost', '?')} est. cost"
+                    f"Token usage: {prompt_tokens} in / {candidates_tokens} out / {total_tokens} total"
                 )
             else:
                 self._last_usage = None
