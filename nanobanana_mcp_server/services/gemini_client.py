@@ -200,6 +200,39 @@ class GeminiClient:
             )
 
             response = self.client.models.generate_content(**api_kwargs)
+
+            # Capture usage metadata for cost tracking
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0) or 0
+                candidates_tokens = getattr(usage, "candidates_token_count", 0) or 0
+                total_tokens = getattr(usage, "total_token_count", 0) or 0
+                self._last_usage = {
+                    "prompt_tokens": prompt_tokens,
+                    "candidates_tokens": candidates_tokens,
+                    "total_tokens": total_tokens,
+                }
+                model_name = self.gemini_config.model_name
+                if "pro" in model_name:
+                    input_cost = prompt_tokens * 0.002 / 1000
+                    output_cost = candidates_tokens * 0.12 / 1000
+                    self._last_usage["estimated_cost"] = round(input_cost + output_cost, 4)
+                    self._last_usage["pricing"] = "pro"
+                elif "flash" in model_name:
+                    input_cost = prompt_tokens * 0.0005 / 1000
+                    output_cost = candidates_tokens * 0.06 / 1000
+                    self._last_usage["estimated_cost"] = round(input_cost + output_cost, 4)
+                    self._last_usage["pricing"] = "flash"
+                else:
+                    self._last_usage["estimated_cost"] = None
+                    self._last_usage["pricing"] = "unknown"
+                self.logger.info(
+                    f"Token usage: {prompt_tokens} in / {candidates_tokens} out / "
+                    f"${self._last_usage.get('estimated_cost', '?')} est. cost"
+                )
+            else:
+                self._last_usage = None
+
             return response
 
         except Exception as e:
